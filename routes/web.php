@@ -15,17 +15,6 @@ use Illuminate\Support\Facades\DB;
 |
 */
 
-
-function gerarqrb64($c)
-{
-    include(__DIR__.'/../vendor/phpqrcode/qrlib.php');    
-    QRcode::png(env("APP_URL") . "/recibo/$c", __DIR__."/../../public_html/qrs/$c.png");    
-    $binpng = file_get_contents(__DIR__."/../../public_html/qrs/$c.png");    
-    unlink(__DIR__."/../../public_html/qrs/$c.png");    
-    $ret = base64_encode($binpng) . "";    
-    return $ret;
-}
-
 Route::get('/', function () {
     if (App::environment('local')) {
         return view('intro', ["callback_rgs" => "onclick=rgs()"]);
@@ -34,92 +23,10 @@ Route::get('/', function () {
     }
 });
 
-Route::get('/TestJSONUpaBE', function () {
-    
-    $json = [['key' => 0, 'quest' => "Paciente apresenta sangramento?"],
-        ['key' => 1, 'quest' => "Paciente sente dores a mais de um dia?"],
-        ['key' => 2, 'quest' => "Paciente apresenta lesões ou fraturas?"],
-        ['key' => 3, 'quest' => "Paciente apresenta nenhum dos sintomas acima."]];
-        
-    return response()->json($json);
-});
-
-Route::get('/recibo/{c}', function ($c) {
-    $r = DB::table('recibos')->where('code', $c)->first();
-    
-    if (is_null($r))
-    {
-        return view("rossi");
-    }
-    
-    $rd = $r->created_at;
-    
-    return view('app', 
-                    [
-                        "nome" => $r->nome,
-                        "cpf" => $r->cpf,
-                        "vl" => $r->valor,
-                        "qtd" => $r->qtd,
-                        "dia" => $r->dia,
-                        "mes" => $r->mes,
-                        "ano" => $r->ano,
-                        "diah" => substr($rd, 8, 2),
-                        "mesh" => substr($rd, 5, 2),
-                        "anoh" => substr($rd, 0, 4),
-                        "code" => $c,
-                        "qr" => $r->qr
-                    ]
-                );
-});
-
-Route::post('/approssibknd', function (Request $request) {
-    $code = time(); echo "OK1";
-    DB::table('recibos')->insert(
-        array(
-            "nome" => $request->all("nome")["nome"],
-            "cpf" => $request->all("cpf")["cpf"],
-            "valor" => $request->all("vl")["vl"],
-            "qtd" => $request->all("qtd")["qtd"],
-            "dia" => $request->all("d")["d"],
-            "mes" => $request->all("m")["m"],
-            "ano" => $request->all("a")["a"],
-            "code" => "$code",
-            "qr" => gerarqrb64($code)
-        )
-    );
-    
-    if (!App::environment('local'))
-    {
-        mail ( "douglasjfm@gmail.com, davimedeiros.rossi@hotmail.com" , "Recibo $code gerado" , env("APP_URL", "http://error") . "/recibo/$code");
-    }
-
-    return view('app', 
-                    [
-                        "nome" => $request->all("nome")["nome"],
-                        "cpf" => $request->all("cpf")["cpf"],
-                        "vl" => $request->all("vl")["vl"],
-                        "qtd" => $request->all("qtd")["qtd"],
-                        "dia" => $request->all("d")["d"],
-                        "mes" => $request->all("m")["m"],
-                        "ano" => $request->all("a")["a"],
-                        "diah" => date("d"),
-                        "mesh" => date("m"),
-                        "anoh" => date("Y"),
-                        "code" => "********",
-                        "qr" => "0000"
-                    ]
-                );
-});
-
-Route::get('/approssi', function () {
-    return view('rossi');
-});
-
 Route::middleware('auth')->get('/dashboard', function () {
     return view('dashboard');
 })->name('dashboard');
 
-//////////////////////////////LOGICA LINQ.FUN//////////////////////////////////
 Route::post('/_hash', function (Request $request) {
     $link = $request->all("l");
     $aut = $request->all("aut");
@@ -159,9 +66,7 @@ Route::post('/_hash', function (Request $request) {
 });
 
 Route::post('/_regis', function (Request $request) {
-    
-    //App\Models\Registro::all();
-    
+        
     $q = substr($request->all("h")["h"], 0, 25);
     $l = substr($request->all("l")["l"], 0, 1024);
     
